@@ -6,67 +6,46 @@
 //  Copyright © 2018 Nathan Burnett. All rights reserved.
 //
 
-import Expression
 import UIKit
 
 class ViewController: UIViewController {
 
-    var lines: [NSMutableAttributedString] = [NSMutableAttributedString(), NSMutableAttributedString()]
+    var model = CalculatorModel()
+    let numCalculationLines = 7
+    let indexOfFirstLine = 10
     @IBOutlet weak var display: UILabel!
     
     @IBAction func touchPreviousCalculation(_ sender: UIButton) {
-        
+        display.text! += sender.attributedTitle(for: .normal)!.string
     }
 
     private func updateCalculationsDisplay() {
-        let numCalculationLines = 7
-        let indexOfFirstLine = 10
-        let indexOfLastLine = indexOfFirstLine + numCalculationLines - 1
-        
-        let newCalculation = lines[1]
-        let newResult = lines[0]
-        
-        var prev = NSAttributedString()
-        
-        for i in stride(from: indexOfLastLine, through: indexOfFirstLine, by: -1) {
+        for i in indexOfFirstLine ..< indexOfFirstLine + numCalculationLines {
             let currentButton = self.view.viewWithTag(i) as? UIButton
-            if i - 2 >= indexOfFirstLine{
-                let tmpButton = self.view.viewWithTag(i - 2) as! UIButton
-                prev = tmpButton.attributedTitle(for: .normal)!
-                currentButton?.setAttributedTitle(prev, for: .normal)
-            }
+            currentButton?.setAttributedTitle(model.getCalculation(i - indexOfFirstLine), for: .normal)
         }
-        let secondButton = self.view.viewWithTag(indexOfFirstLine + 1) as? UIButton
-        secondButton?.setAttributedTitle(newCalculation, for: .normal)
-        let firstButton = self.view.viewWithTag(indexOfFirstLine) as? UIButton
-        firstButton?.setAttributedTitle(newResult, for: .normal)
-    }
-    
-    private func createColoredString(_ myString: String, myColor: UIColor) -> NSMutableAttributedString {
-        let myRange = NSMakeRange(0, myString.count)
-        let attributedString = NSMutableAttributedString(string: myString)
-        attributedString.addAttribute(NSAttributedStringKey.foregroundColor, value: myColor, range: myRange)
-        return attributedString
     }
     
     @IBAction func touchEvaluate() {
         let textInDisplay = display.text!
-        var result = ""
         display.text = ""
-        let expression = Expression(textInDisplay)
-        do{
-            result = String(try expression.evaluate())
-        } catch {
-            result = "Error"
-        }
-        lines[1] = createColoredString(textInDisplay, myColor: UIColor.lightGray)
-        lines[0] = createColoredString(result, myColor: UIColor.green)
+        model.addCalculation(calculation: textInDisplay)
         updateCalculationsDisplay()
     }
     
     @IBAction func touchOperator(_ sender: UIButton) {
         let operation = sender.currentTitle!
-        display.text! += operation
+        if(operation == "(" || operation == ")"){
+            display.text! += operation
+        } else if(operation.count > 2){
+            display.text! += operation + "("
+        } else{
+            display.text! += " " + operation + " "
+        }
+    }
+    
+    @IBAction func touchClear() {
+        display.text = ""
     }
     
     @IBAction func touchDigit(_ sender: UIButton) {
